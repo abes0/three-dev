@@ -17,6 +17,7 @@ export default class Canvas {
     // レンダラーを作成
     this.renderer = new THREE.WebGLRenderer({
       alpha: true,
+      antialias: true,
     });
     this.renderer.setSize(this.w, this.h);
     this.renderer.setPixelRatio(window.devicePixelRatio);
@@ -37,79 +38,92 @@ export default class Canvas {
 
     this.scene = new THREE.Scene();
 
-    this.light = new THREE.PointLight(0xffffff);
-    this.light.position.set(0, 0, 400);
+    this.light = new THREE.DirectionalLight(0xffffff);
+    this.light.position.set(400, 400, 400);
     this.scene.add(this.light);
 
     this.renderer.render(this.scene, this.camera);
 
     this.render();
-    console.log(performance);
+    // console.log(performance);
 
+    // this.mesh;
     this.targetX = 0;
+    this.targetY = 0;
+
     this.nowX = 0;
-    this.ease = 0.05;
+    this.nowY = 0;
+
+    this.vx = 0;
+    this.vy = 0;
+
+    this.power = 0.7;
+    this.ease = 0.1;
+
+    this.init();
   }
 
-  init(element) {
-    console.log("init");
-    this.element = element;
-    const rect = this.element.getBoundingClientRect();
-
-    const depth = 1000;
-    const geo = new THREE.BoxGeometry(rect.width, rect.height, depth);
-
-    const mat = new THREE.MeshLambertMaterial({ color: 0x00ff00 });
-
+  init() {
+    const geo = new THREE.OctahedronGeometry(100, 1);
+    const line = new THREE.LineBasicMaterial({
+      color: 0xffffff,
+      transparent: true,
+      opacity: 0.5,
+    });
+    const mat = new THREE.MeshPhongMaterial({
+      color: 0xaabbcc,
+      emissive: 0x072534,
+      // side: THREE.DoubleSide,
+      flatShading: true,
+    });
+    // this.mesh = new THREE.LineSegments(geo, line);
     this.mesh = new THREE.Mesh(geo, mat);
-
-    const center = new THREE.Vector2(
-      rect.x + rect.width / 2,
-      rect.y + rect.height / 2
-    );
-    const diff = new THREE.Vector2(
-      center.x - this.w / 2,
-      center.y - this.h / 2
-    );
-    this.targetX = diff.x;
-    this.nowX = -center.x * 2;
-    this.mesh.position.set(-center.x * 2, -(diff.y + this.scrollY), -depth / 2);
-    this.offsetY = this.mesh.position.y;
-    console.log(this.mesh);
-
     this.scene.add(this.mesh);
   }
 
-  remove() {
-    if (this.mesh) {
-      this.scene.remove(this.mesh);
-    }
-  }
-
   mouseMoved(x, y) {
-    this.mouse.x = x - this.w / 2;
-    this.mouse.y = -y + this.h / 2;
-
-    this.light.position.x = this.mouse.x;
-    this.light.position.y = this.mouse.y;
-  }
-
-  scrolled(y) {
-    this.scrollY = y;
-    console.log(this.scrollY);
+    this.targetX = x - this.w / 2;
+    this.targetY = -y + this.h / 2;
   }
 
   render() {
     requestAnimationFrame(() => {
       this.render();
     });
-
+    // console.log(this.mesh);
     if (this.mesh) {
-      this.mesh.position.y = this.offsetY + this.scrollY;
+      // 慣性
       this.nowX += (this.targetX - this.nowX) * this.ease;
-      console.log("this.nowX: ", this.nowX);
+      this.nowY += (this.targetY - this.nowY) * this.ease;
+
+      //バネ
+      // this.vx += (this.targetX - this.nowX) * this.power;
+      // this.vy += (this.targetY - this.nowY) * this.power;
+      // this.nowX += this.vx *= this.power;
+      // this.nowY += this.vy *= this.power;
+
+      const dx = this.targetX - this.nowX;
+      const dy = this.targetY - this.nowY;
+      const distance = Math.sqrt(dx * dx + dy * dy) / 1000;
+
       this.mesh.position.x = this.nowX;
+      this.mesh.position.y = this.nowY;
+
+      // this.mesh.rotation.z += 0.01;
+
+      console.log(distance);
+      if (dx > 0) {
+        this.mesh.rotation.y += distance;
+      } else {
+        this.mesh.rotation.y -= distance;
+      }
+      if (dy < 0) {
+        this.mesh.rotation.x += distance;
+      } else {
+        this.mesh.rotation.x -= distance;
+      }
     }
+
     this.renderer.render(this.scene, this.camera);
   }
 }
