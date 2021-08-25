@@ -6,5 +6,17 @@ html(lang="en")
     meta(name="viewport", content="width=device-width, initial-scale=1.0")
     title Document
   body
-    a(href="./00/") 00
+    ul
+      -
+        const nav = [
+          '00',
+          '01',
+          '02'
+        ]
+
+      each item in nav
+        li
+          a(href=`./${item}/`)
+              = item
+
     script(src="index.bundle.js")
