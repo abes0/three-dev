@@ -45,79 +45,192 @@ export default class Canvas {
     this.renderer.render(this.scene, this.camera);
 
     this.render();
-    this.init();
+
+    this.number = 12;
+    this.param = [];
+    this.geometry = [THREE.OctahedronGeometry, THREE.BoxGeometry];
+    this.burstSize = 100;
+    this.now = 0;
+    this.clickFlag = false;
+    this.ease = 0.1;
+
+    for (let i = 0; i < this.number; i++) {
+      this.init();
+    }
   }
 
   init() {
-    const geo = new THREE.OctahedronGeometry(100, 1);
-    const line = new THREE.LineBasicMaterial({
-      color: 0xffffff,
-      transparent: true,
-      opacity: 0.5,
-    });
-    const mat = new THREE.MeshPhongMaterial({
-      color: 0xaabbcc,
+    const param = {
+      speed: this.random(0.01, 0.1),
+      angle: 0,
+      color: 0xbbccaa * Math.random(),
+      default: {
+        x: this.random(-170, 170),
+        y: this.random(-170, 170),
+        z: this.random(-170, 170),
+      },
+    };
+    param.position = {
+      x: param.default.x,
+      y: param.default.y,
+      z: param.default.z,
+    };
+    const geoNum = Math.floor(this.random(0, 7));
+    let geo;
+    switch (geoNum) {
+      case 0:
+        geo = new THREE.OctahedronGeometry(this.random(20, 40), 1);
+        break;
+      case 1:
+        let size = this.random(20, 50);
+        geo = new THREE.BoxGeometry(size, size, size);
+        break;
+      case 2:
+        geo = new THREE.ConeGeometry(
+          this.random(20, 50),
+          this.random(20, 50),
+          this.random(20, 50)
+        );
+        break;
+      case 3:
+        let r = this.random(10, 30);
+        geo = new THREE.CylinderGeometry(
+          r,
+          r,
+          this.random(40, 80),
+          this.random(10, 30)
+        );
+        break;
+      case 4:
+        geo = new THREE.TetrahedronGeometry(this.random(20, 50), 0);
+        break;
+      case 5:
+        geo = new THREE.TorusGeometry(
+          this.random(10, 30),
+          this.random(5, 10),
+          this.random(10, 30),
+          this.random(10, 20)
+        );
+        break;
+      case 6:
+        geo = new THREE.TorusKnotGeometry(
+          this.random(20, 50),
+          this.random(3, 10),
+          this.random(6, 40),
+          16
+        );
+        break;
+    }
+
+    const mat = new THREE.MeshToonMaterial({
+      color: param.color,
       emissive: 0x072534,
       flatShading: true,
+      transparent: true,
+      opacity: 0.4,
     });
-    this.mesh = new THREE.LineSegments(geo, line);
-    // this.mesh = new THREE.Mesh(geo, mat);
+
+    this.mesh = new THREE.Mesh(geo, mat);
+    this.mesh.position.set(
+      param.position.x,
+      param.position.y,
+      param.position.z
+    );
+    this.mesh.scale.set(2.0, 2.0, 2.0);
     this.scene.add(this.mesh);
+    this.param.push(param);
+  }
+
+  rotateX(obj, id) {
+    const cos = Math.cos(this.param[id].angle);
+    const sin = Math.sin(this.param[id].angle);
+
+    const nowY = this.param[id].default.y > 0 ? this.now : -this.now;
+    const nowZ = this.param[id].default.z > 0 ? this.now : -this.now;
+
+    const y =
+      (this.param[id].default.y + nowY) * cos +
+      (this.param[id].default.z + nowZ) * sin;
+    const z =
+      (this.param[id].default.z + nowZ) * cos +
+      (this.param[id].default.y + nowY) * sin;
+
+    obj.y = y;
+    obj.z = z;
+  }
+
+  rotateY(obj, id) {
+    const cos = Math.cos(this.param[id].angle);
+    const sin = Math.sin(this.param[id].angle);
+
+    const nowX = this.param[id].default.x > 0 ? this.now : -this.now;
+    const nowZ = this.param[id].default.z > 0 ? this.now : -this.now;
+
+    const x =
+      (this.param[id].default.x + nowX) * cos +
+      (this.param[id].default.z + nowZ) * sin;
+    const z =
+      (this.param[id].default.z + nowZ) * cos +
+      (this.param[id].default.x + nowX) * sin;
+
+    obj.x = x;
+    obj.z = z;
+  }
+
+  rotateZ(obj, id) {
+    const cos = Math.cos(this.param[id].angle);
+    const sin = Math.sin(this.param[id].angle);
+
+    const nowX = this.param[id].default.x > 0 ? this.now : -this.now;
+    const nowY = this.param[id].default.y > 0 ? this.now : -this.now;
+
+    const x =
+      (this.param[id].default.x + nowX) * cos +
+      (this.param[id].default.y + nowY) * sin;
+    const y =
+      (this.param[id].default.y + nowY) * cos +
+      (this.param[id].default.x + nowX) * sin;
+
+    obj.x = x;
+    obj.y = y;
+  }
+
+  radian(val) {
+    return (val * Math.PI) / 180;
+  }
+
+  degree(val) {
+    return (val * 180) / Math.PI;
+  }
+
+  random(min, max) {
+    return Math.random() * (max - min) + min;
   }
 
   mouseMoved(x, y) {}
 
+  mouseDown() {
+    this.clickFlag = true;
+  }
+
+  mouseUp() {
+    this.clickFlag = false;
+  }
+
   animation(mesh, id) {
     if (mesh) {
-      this.angle[id] += this.speed;
-      this.angleZ[id] += this.speedZ;
-      const radian = this.angle[id] * (Math.PI / 180);
-      const radianZ = this.angleZ[id] * (Math.PI / 180);
-      mesh.position.y = Math.cos(radian) * this.size;
-      mesh.position.x = Math.sin(radian) * this.size;
-
-      //　時間
-      if (
-        this.angle[id] % 360 <
-          (this.hour + 0.4 + this.minutes / 60) * (360 / 12) &&
-        this.angle[id] % 360 >
-          (this.hour - 0.4 + this.minutes / 60) * (360 / 12)
-      ) {
-        mesh.material.color.g = 0.4;
-        mesh.material.color.b = 0.4;
-      } else {
-        mesh.material.color.g = 1;
-        mesh.material.color.b = 1;
-      }
-      if (
-        this.angle[id] % 360 <
-          (this.hour + 0.1 + this.minutes / 60) * (360 / 12) &&
-        this.angle[id] % 360 >
-          (this.hour - 0.1 + this.minutes / 60) * (360 / 12)
-      ) {
-        mesh.material.color.g = 0;
-        mesh.material.color.b = 0;
+      this.param[id].angle += this.param[id].speed;
+      if (this.clickFlag) {
+        this.param[id].angle += this.param[id].speed * 1.5;
       }
 
-      // 分
-      if (
-        this.angle[id] % 360 < (this.minutes + 1.5) * (360 / 60) &&
-        this.angle[id] % 360 > (this.minutes - 1.5) * (360 / 60)
-      ) {
-        mesh.material.color.r = 0.4;
-        mesh.material.color.b = 0.4;
-      } else {
-        mesh.material.color.r = 1;
-        mesh.material.color.b = 1;
-      }
-      if (
-        this.angle[id] % 360 < (this.minutes + 0.5) * (360 / 60) &&
-        this.angle[id] % 360 > (this.minutes - 0.5) * (360 / 60)
-      ) {
-        mesh.material.color.r = 0;
-        mesh.material.color.b = 0;
-      }
-      mesh.position.z = Math.abs(Math.cos(radianZ) + Math.cos(radianZ)) * 50;
+      this.rotateZ(mesh.position, id);
+      this.rotateX(mesh.position, id);
+      this.rotateY(mesh.position, id);
+
+      mesh.rotation.x += 0.05;
+      mesh.rotation.y += 0.06;
+      mesh.rotation.z += 0.07;
     }
   }
 
@@ -125,9 +238,18 @@ export default class Canvas {
     requestAnimationFrame(() => {
       this.render();
     });
-    // for (let j = 1; j < this.scene.children.length; j++) {
-    //   this.animation(this.scene.children[j], j - 1);
-    // }
+
+    if (this.clickFlag) {
+      this.now += (this.burstSize - this.now) * this.ease;
+    } else {
+      this.now += (0 - this.now) * this.ease;
+      if (this.now < 0.01) {
+        this.now = 0;
+      }
+    }
+    for (let i = 0; i < this.number; i++) {
+      this.animation(this.scene.children[i + 1], i);
+    }
 
     this.renderer.render(this.scene, this.camera);
   }
