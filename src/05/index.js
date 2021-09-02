@@ -18,8 +18,8 @@ export default class Page05 {
     //   canvas.mouseUp();
     // });
 
-    window.addEventListener("scroll", (e) => {
-      canvas.scrolled(window.scrollY);
-    });
+    // window.addEventListener("scroll", (e) => {
+    //   canvas.scrolled(window.scrollY);
+    // });
   }
 }
