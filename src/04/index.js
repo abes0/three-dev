@@ -10,13 +10,13 @@ export default class Page04 {
       canvas.mouseMoved(e.clientX, e.clientY);
     });
 
-    window.addEventListener("mousedown", (e) => {
-      canvas.mouseDown();
-    });
+    // window.addEventListener("mousedown", (e) => {
+    //   canvas.mouseDown();
+    // });
 
-    window.addEventListener("mouseup", (e) => {
-      canvas.mouseUp();
-    });
+    // window.addEventListener("mouseup", (e) => {
+    //   canvas.mouseUp();
+    // });
 
     window.addEventListener("scroll", (e) => {
       canvas.scrolled(window.scrollY);
