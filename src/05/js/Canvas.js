@@ -40,11 +40,49 @@ export default class Canvas {
 
     this.scene = new THREE.Scene();
 
+    this.text = {
+      content: [..."Love the life you live. Live the life you love."],
+      size: 0,
+    };
+    this.text.size = this.w / this.text.content.length;
+    this.curning = {
+      text: ["i", "l", " ", "."],
+      halfText: ["f", "t", "r"],
+      addText: ["m", "w", "W"],
+      halfAddText: ["A", "B", "C", "D", "E", "F", "G", "H", "K", "O", "T", "W"],
+      twiceAddText: [],
+      number: 0,
+      margin: 0,
+    };
+    this.curning.margin =
+      this.text.content.filter((letter) => {
+        return this.curning.text.includes(letter);
+      }).length +
+      this.text.content.filter((letter) => {
+        return this.curning.halfText.includes(letter);
+      }).length /
+        2 -
+      this.text.content.filter((letter) => {
+        return this.curning.addText.includes(letter);
+      }).length -
+      this.text.content.filter((letter) => {
+        return this.curning.halfAddText.includes(letter);
+      }).length /
+        2 -
+      this.text.content.filter((letter) => {
+        return this.curning.twiceAddText.includes(letter);
+      }).length *
+        2;
+    console.log("margin: ", this.curning.margin, this.text.content);
     this.size = 100;
-    this.number = 6;
+    this.number = 1;
     this.params = [];
+    this.color = {
+      default: 0xbb3333,
+      now: 0xbb3333,
+    };
 
-    for (let i = 0; i < this.number; i++) {
+    for (let i = 0; i < this.text.content.length; i++) {
       this.init(i);
     }
 
@@ -52,61 +90,99 @@ export default class Canvas {
     this.light.position.set(300, 300, dist * 2);
     this.scene.add(this.light);
 
-    // this.lightHelper = new THREE.DirectionalLightHelper(this.light, 30);
-    // this.scene.add(this.lightHelper);
-
     this.renderer.render(this.scene, this.camera);
+    console.log(this.scene);
 
     this.render();
   }
 
   init(id) {
-    const size = {
-      w: this.random(this.w * 0.1, this.w * 0.7),
-      h: this.random(this.h * 0.1, this.h * 0.7),
-    };
-
     const target = {
-      x: this.random(-this.w * 0.35, this.w * 0.35),
-      y: this.random(-this.h * 0.35, this.h * 0.35),
+      x: 0,
+      y: 0,
+      rotation: {
+        x: (Math.PI / 180) * this.random(180, 360),
+        y: (Math.PI / 180) * this.random(180, 360),
+        z: (Math.PI / 180) * this.random(180, 360),
+      },
     };
 
     const dir = {
-      x: 0,
-      y: 0,
+      x: this.random(-0.5, 0.5),
+      y: this.random(-0.5, 0.5),
     };
-    if (this.random(0, 1) > 0.5) {
-      dir.x = this.random(-1, 1);
-    } else {
-      dir.y = this.random(-1, 1);
-    }
 
     const now = {
-      x: dir.x === 0 ? target.x : target.x + this.w * dir.x,
-      y: dir.y === 0 ? target.y : target.y + this.h * dir.y,
+      x: 0,
+      y: 0,
+      rotation: {
+        x: target.rotation.x,
+        y: target.rotation.y,
+        z: target.rotation.z,
+      },
     };
+    const loader = new THREE.FontLoader();
+    loader.load("/helvetiker_bold.typeface.json", (font) => {
+      const geo = new THREE.TextGeometry(this.text.content[id], {
+        font: font,
+        size: this.text.size * 1.2,
+        height: 1,
+        curveSegments: 12,
+        bevelEnabled: true,
+        bevelThickness: 5,
+        bevelSize: 50 / this.text.content.length,
+        bevelOffset: 0,
+        bevelSegments: 5,
+      });
 
-    const geo = new THREE.PlaneGeometry(size.w, size.h, 32, 32);
-    const mat = new THREE.MeshToonMaterial({
-      color: 0xbb3333,
-      // emissive: 0x072534,
-      // flatShading: true,
-      transparent: true,
-      opacity: 0.4,
+      const mat = new THREE.MeshToonMaterial({
+        color: this.color.default,
+        // emissive: 0x072534,
+        // flatShading: true,
+        // transparent: true,
+        // opacity: 0.4,
+      });
+
+      const mesh = new THREE.Mesh(geo, mat);
+      if (id > 0) {
+        if (this.curning.text.includes(this.text.content[id - 1])) {
+          this.curning.number++;
+        }
+        if (this.curning.halfText.includes(this.text.content[id - 1])) {
+          this.curning.number += 0.5;
+        }
+        if (this.curning.addText.includes(this.text.content[id - 1])) {
+          this.curning.number--;
+        }
+        if (this.curning.halfAddText.includes(this.text.content[id - 1])) {
+          this.curning.number -= 0.5;
+        }
+        if (this.curning.twiceAddText.includes(this.text.content[id - 1])) {
+          this.curning.number -= 2.0;
+        }
+      }
+      target.x =
+        id < this.text.content.length / 2
+          ? this.text.size *
+              -(
+                this.text.content.length / 2 -
+                (id - 0.5 * this.curning.number)
+              ) +
+            (this.text.size * this.curning.margin) / 4
+          : this.text.size *
+              (id - 0.5 * this.curning.number - this.text.content.length / 2) +
+            (this.text.size * this.curning.margin) / 4;
+
+      now.x = dir.x === 0 ? target.x : target.x + this.w * dir.x;
+      now.y = dir.y === 0 ? target.y : target.y + this.h * dir.y;
+
+      mesh.position.x = target.x;
+      mesh.position.y = target.y;
+      mesh.rotation.set(now.rotation.x, now.rotation.y, now.rotation.z);
+      this.scene.add(mesh);
     });
 
-    const mesh = new THREE.Mesh(geo, mat);
-    mesh.position.x = now.x;
-    mesh.position.y = now.y;
-    this.scene.add(mesh);
-    console.table({
-      size,
-      target,
-      dir,
-      now,
-    });
     this.params.push({
-      size,
       target,
       dir,
       now,
@@ -125,16 +201,31 @@ export default class Canvas {
     return Math.random() * (max - min) + min;
   }
 
+  toRGB(hexcolor) {
+    return {
+      r: Math.floor(hexcolor / 65536),
+      g: Math.floor(hexcolor % 65536) / 256,
+      b: hexcolor % 256,
+    };
+  }
+
   mouseMoved(x, y) {}
 
   animation(mesh, id) {
-    const { size, target, dir, now } = this.params[id];
+    const { target, dir, now } = this.params[id];
     const x = target.x + dir.x * this.w * (1 - this.scrollProgress);
     const y = target.y + dir.y * this.h * (1 - this.scrollProgress);
     now.x += (x - now.x) * 0.1;
     now.y += (y - now.y) * 0.1;
+    now.rotation.x = target.rotation.x * (1 - this.scrollProgress);
+    now.rotation.y = target.rotation.y * (1 - this.scrollProgress);
+    now.rotation.z = target.rotation.z * (1 - this.scrollProgress);
+
     mesh.position.x = now.x;
     mesh.position.y = now.y;
+    mesh.rotation.x = now.rotation.x;
+    mesh.rotation.y = now.rotation.y;
+    mesh.rotation.z = now.rotation.z;
   }
 
   render() {
@@ -146,10 +237,10 @@ export default class Canvas {
     this.scrollProgress = this.scrollY / (document.body.clientHeight - this.h);
     console.log(this.scrollY, document.body.clientHeight, this.scrollProgress);
 
-    for (let j = 0; j < this.number; j++) {
-      // if (this.scene.children[j]) {
-      this.animation(this.scene.children[j], j);
-      // }
+    for (let j = 0; j < this.text.content.length; j++) {
+      if (this.scene.children[j + 1]) {
+        this.animation(this.scene.children[j + 1], j);
+      }
     }
 
     this.renderer.render(this.scene, this.camera);
