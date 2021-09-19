@@ -27,6 +27,7 @@
     "regenerator-runtime": "^0.13.9",
     "sass": "^1.36.0",
     "sass-loader": "^12.1.0",
+    "simplenoise": "^1.0.1",
     "style-loader": "^3.2.1"
   },
   "devDependencies": {

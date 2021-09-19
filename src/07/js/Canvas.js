@@ -2,6 +2,7 @@ import * as THREE from "three";
 import "core-js/stable";
 import "regenerator-runtime/runtime";
 import chroma from "chroma-js";
+import noise from "simplenoise";
 
 export default class Canvas {
   constructor() {
@@ -38,6 +39,8 @@ export default class Canvas {
     this.camera.position.z = dist;
 
     this.scene = new THREE.Scene();
+    this.group = new THREE.Group();
+    this.scene.add(this.group);
 
     this.light = new THREE.DirectionalLight(0xffffff);
     this.light.position.set(400, 400, 400);
@@ -46,9 +49,12 @@ export default class Canvas {
     this.renderer.render(this.scene, this.camera);
 
     this.render();
-    // console.log(performance);
 
-    // this.mesh;
+    noise.seed(Math.random());
+
+    this.segments = 100;
+    this.amount = 30;
+
     this.stateMouseDown = false;
     this.startX = 0;
     this.startY = 0;
@@ -71,47 +77,42 @@ export default class Canvas {
   }
 
   init() {
-    const geo = new THREE.OctahedronGeometry(100, 1);
-    const line = new THREE.LineBasicMaterial({
-      color: 0xffffff,
-      transparent: true,
-      opacity: 0.5,
-    });
-    const mat = new THREE.MeshPhongMaterial({
-      color: 0xaabbcc,
-      emissive: 0x072534,
-      // side: THREE.DoubleSide,
-      flatShading: true,
-    });
-    // this.mesh = new THREE.LineSegments(geo, line);
-    this.mesh = new THREE.Mesh(geo, mat);
-    this.scene.add(this.mesh);
-    console.log(this.mesh.material.color);
+    const time = Date.now() / 4000;
+    const points = [];
+    for (let j = 0; j < this.amount; j++) {
+      for (let i = 0; i < this.segments; i++) {
+        const x = -(((this.w + 100) / this.segments) * i - this.w / 2);
+        const px = i / 20;
+        const y = 0;
+
+        const z = j * 10;
+        const p = new THREE.Vector3(x, y, z);
+        points.push(p);
+      }
+      const geo = new THREE.BufferGeometry().setFromPoints(points);
+      const mat = new THREE.LineBasicMaterial();
+      const mesh = new THREE.Line(geo, mat);
+      this.group.add(mesh);
+    }
   }
 
   mouseMoved(e) {
     if (this.stateMouseDown) {
-      // console.log(e.x, e.y, this.w, this.h);
       this.targetX = e.x - this.w / 2;
       this.targetY = -e.y + this.h / 2;
       this.diffX = (this.targetX - this.startX) * this.friction;
       this.diffY = (this.targetY - this.startY) * this.friction;
-
-      // this.diffX *= this.friction;
-      // this.diffY *= this.friction;
-      // console.log("mouseMoved", e, { x: this.targetX, y: this.targetY });
     }
   }
 
   onMouseDown(e) {
-    console.log("mousedown", e);
     this.stateMouseDown = true;
     this.startX = e.x - this.w / 2;
     this.startY = -e.y + this.h / 2;
+    this.color = "#f00";
   }
 
   onMouseUp(e) {
-    console.log("mouseup", e);
     this.stateMouseDown = false;
     this.targetX = 0;
     this.targetY = 0;
@@ -123,28 +124,40 @@ export default class Canvas {
     requestAnimationFrame(() => {
       this.render();
     });
-    if (this.mesh) {
-      // 慣性
-      this.nowX += (this.diffX - this.nowX) * this.ease;
-      this.nowY += (this.diffY - this.nowY) * this.ease;
 
-      this.mesh.position.x = this.nowX;
-      this.mesh.position.y = this.nowY;
-      this.mesh.scale.x = 1 + Math.abs(this.nowX) * 0.005;
-      this.mesh.scale.y = 1 + Math.abs(this.nowY) * 0.005;
+    // 慣性
+    this.nowX += (this.diffX - this.nowX) * this.ease;
+    this.nowY += (this.diffY - this.nowY) * this.ease;
 
-      const distance =
-        Math.sqrt(this.nowX * this.nowX + this.nowY * this.nowY) * 0.005;
-      console.log("distance", distance);
+    const distance =
+      Math.sqrt(this.nowX * this.nowX + this.nowY * this.nowY) * 0.005;
+
+    this.group.children.forEach((item, index) => {
+      if (item) {
+        item.geometry.attributes.position.needsUpdate = true;
+
+        const positions = item.geometry.attributes.position.array;
+        const time = Date.now() / 4000;
+
+        for (let i = 0; i < this.segments; i++) {
+          const x = ((this.w + 100) / this.segments) * i - this.w / 2;
+          const px = i / 50;
+          const y =
+            (this.h / 4) * (distance * (index / 3)) * noise.perlin2(px, time);
+
+          positions[i * 3] = x;
+          positions[i * 3 + 1] = y;
+        }
+      }
+
       this.color = chroma
-        .scale(["#abc", "#f00"])
+        .scale(["#fff", "#f00"])
         .domain([0, 1])(distance)
         .rgb();
-      this.mesh.material.color.r = this.color[0] / 255;
-      this.mesh.material.color.g = this.color[1] / 255;
-      this.mesh.material.color.b = this.color[2] / 255;
-      console.log(this.color);
-    }
+      item.material.color.r = this.color[0] / 255;
+      item.material.color.g = this.color[1] / 255;
+      item.material.color.b = this.color[2] / 255;
+    });
 
     this.renderer.render(this.scene, this.camera);
   }
