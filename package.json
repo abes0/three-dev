@@ -29,7 +29,8 @@
     "sass": "^1.36.0",
     "sass-loader": "^12.1.0",
     "simplenoise": "^1.0.1",
-    "style-loader": "^3.2.1"
+    "style-loader": "^3.2.1",
+    "webpack-glsl-loader": "^1.0.1"
   },
   "devDependencies": {
     "three": "^0.130.1",

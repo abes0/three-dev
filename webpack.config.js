@@ -91,6 +91,12 @@ const app = {
           },
         ],
       },
+      {
+        test: /\.(vert|frag|glsl)$/,
+        use: {
+          loader: "webpack-glsl-loader",
+        },
+      },
     ],
   },
   devServer: {
