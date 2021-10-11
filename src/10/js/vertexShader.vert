@@ -16,7 +16,7 @@ void main() {
   // );
   vUv.x /= u_uvSize.x;
   vUv.y /= u_uvSize.y;
-  vUv.x += u_uvPosition.x - 0.1;
+  vUv.x += u_uvPosition.x - 0.075;
   vUv.y += u_uvPosition.y - 0.1;
   gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
 }

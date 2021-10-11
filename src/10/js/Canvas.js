@@ -11,14 +11,14 @@ export default class Canvas extends TemplateCanvas {
   }
 
   createPlanes() {
-    const amount = 50;
+    const amount = 60;
     const width = {
       max: 400,
       min: 200,
     };
     const heightRatio = 1604 / 2143;
 
-    this.xRange = 0.9;
+    this.xRange = 0.8;
     this.yRange = 0.7;
     // console.log(this.w, this.h);
 
@@ -191,40 +191,40 @@ class Plate {
 
     // scale animation
     //------------------
-    // if (this.delay < this.time) {
-    //   this.start = true;
-    // }
-    // if (this.start) {
-    //   if (this.minus) {
-    //     this.scale.now += (0 - this.scale.now) * this.scale.ease;
-    //   } else {
-    //     this.scale.now += (1 - this.scale.now) * this.scale.ease;
-    //   }
-    // }
+    if (this.delay < this.time) {
+      this.start = true;
+    }
+    if (this.start) {
+      if (this.minus) {
+        this.scale.now += (0 - this.scale.now) * this.scale.ease;
+      } else {
+        this.scale.now += (1 - this.scale.now) * this.scale.ease;
+      }
+    }
 
-    // if (this.scale.now > 0.999) {
-    //   this.minus = true;
-    // }
+    if (this.scale.now > 0.999) {
+      this.minus = true;
+    }
 
-    // if (this.scale.now < 0.001) {
-    //   this.start = false;
-    //   this.minus = false;
-    //   this.changePosition();
-    // }
+    if (this.scale.now < 0.001) {
+      this.start = false;
+      this.minus = false;
+      this.changePosition();
+    }
     //------------------
 
     // console.log(this.scale.now);
-    this.position.range += (1 - this.position.range) * this.position.speed;
+    // this.position.range += (1 - this.position.range) * this.position.speed;
 
-    this.position.x +=
-      (this.x * this.position.range - this.position.x) * this.position.ease;
-    this.position.y +=
-      (this.y * this.position.range - this.position.y) * this.position.ease;
-    console.log(this.position.range);
+    // this.position.x +=
+    //   (this.x * this.position.range - this.position.x) * this.position.ease;
+    // this.position.y +=
+    //   (this.y * this.position.range - this.position.y) * this.position.ease;
+    // console.log(this.position.range);
 
-    if (this.position.range > 0.999) {
-      this.changePosition();
-    }
+    // if (this.position.range > 0.999) {
+    //   this.changePosition();
+    // }
 
     // this.position.x += (this.x - this.position.x) * this.scale.now;
     // this.position.y += (this.y - this.position.y) * this.scale.now;
@@ -233,18 +233,18 @@ class Plate {
     // }
 
     // console.log(this.scale.now);
-    // this.mesh.scale.x = this.scale.now;
-    // this.mesh.scale.y = this.scale.now;
+    this.mesh.scale.x = this.scale.now;
+    this.mesh.scale.y = this.scale.now;
     // this.mesh.rotation.y = (Math.PI / 180) * 90 * this.scale.now;
     // this.mesh.rotation.x += 0.1;
     // this.mesh.rotation.y += 0.1;
     // this.mesh.rotation.z += 0.1;
-    this.mesh.position.x = this.position.x;
-    this.mesh.position.y = this.position.y;
-    (this.uniforms.u_uvPosition.value.x =
-      this.position.x / this.windowSize.w + 0.5),
-      (this.uniforms.u_uvPosition.value.y =
-        this.position.y / this.windowSize.h + 0.5);
+    // this.mesh.position.x = this.position.x;
+    // this.mesh.position.y = this.position.y;
+    // (this.uniforms.u_uvPosition.value.x =
+    //   this.position.x / this.windowSize.w + 0.5),
+    //   (this.uniforms.u_uvPosition.value.y =
+    //     this.position.y / this.windowSize.h + 0.5);
     // if (this.index === 0) {
     //   console.log(this.position.x, this.position.y);
     // }
@@ -258,12 +258,12 @@ class Plate {
 
     // this.position.x = this.x;
     // this.position.y = this.y;
-    this.position.range = 0;
+    // this.position.range = 0;
     this.x = x;
     this.y = y;
-    // this.mesh.position.x = this.x;
-    // this.mesh.position.y = this.y;
-    // (this.uniforms.u_uvPosition.value.x = x / this.windowSize.w + 0.5),
-    //   (this.uniforms.u_uvPosition.value.y = y / this.windowSize.h + 0.5);
+    this.mesh.position.x = this.x;
+    this.mesh.position.y = this.y;
+    (this.uniforms.u_uvPosition.value.x = x / this.windowSize.w + 0.5),
+      (this.uniforms.u_uvPosition.value.y = y / this.windowSize.h + 0.5);
   }
 }
