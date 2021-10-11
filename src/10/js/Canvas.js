@@ -13,14 +13,13 @@ export default class Canvas extends TemplateCanvas {
   createPlanes() {
     const amount = 60;
     const width = {
-      max: 400,
+      max: 300,
       min: 200,
     };
     const heightRatio = 1604 / 2143;
 
     this.xRange = 0.8;
     this.yRange = 0.7;
-    // console.log(this.w, this.h);
 
     this.delay = {
       max: 30.0,
@@ -30,7 +29,7 @@ export default class Canvas extends TemplateCanvas {
     this.meshArray = [];
     this.geoArray = [];
     for (let i = 0; i < amount; i++) {
-      const w = 300; //this.random(width.max, width.min);
+      const w = width.max;
       const h = w * heightRatio;
       const x = this.range(this.xRange * (this.w / 2));
       const y = this.range(this.yRange * (this.h / 2));
@@ -49,17 +48,13 @@ export default class Canvas extends TemplateCanvas {
         index: i,
       });
       const { mesh, geo } = plate.create();
-      // console.log("mesh", mesh);
       this.meshArray.push(plate);
       this.geoArray.push(geo);
       this.group.add(mesh);
     }
-    console.log(this.scene);
   }
 
   render() {
-    // console.log("render");
-    // console.log(this.meshArray);
     if (this.meshArray) {
       this.meshArray.forEach((item) => {
         item.render();
@@ -70,7 +65,6 @@ export default class Canvas extends TemplateCanvas {
   positionRandom() {
     const x = this.range(this.xRange * (this.w / 2));
     const y = this.range(this.yRange * (this.h / 2));
-    console.log(x, y);
 
     return { x, y };
   }
@@ -107,7 +101,6 @@ class Plate {
     this.texture = new THREE.TextureLoader().load(
       "./picture-min.jpg",
       (tex) => {
-        // console.log(tex);
         return tex;
       }
     );
@@ -141,56 +134,23 @@ class Plate {
         ),
       },
     };
-    // console.log(this.uniforms.u_uvPosition.value);
     const geo = new THREE.PlaneGeometry(this.w, this.h, 32, 32);
     const mat = new THREE.ShaderMaterial({
       uniforms: this.uniforms,
       vertexShader,
       fragmentShader,
-      // emissive: 0x072534,
-      // flatShading: true,
-      // transparent: true,
-      // opacity: 0.4,
-      // map: texture,
-      // clippingPlanes: [new THREE.Plane(new THREE.Vector3(1, 0, 0), -10)],
-
-      // side: THREE.DoubleSide,
-
-      // stencilWrite: true,
-      // stencilRef: 0,
-      // stencilFunc: THREE.NotEqualStencilFunc,
-      // stencilFail: THREE.ReplaceStencilOp,
-      // stencilZFail: THREE.ReplaceStencilOp,
-      // stencilZPass: THREE.ReplaceStencilOp,
     });
-    // console.log(mat.color);
-    // mat.color.r = Math.random();
-    // mat.color.g = Math.random();
-    // mat.color.b = Math.random();
     this.mesh = new THREE.Mesh(geo, mat);
-    // console.log(this.mesh.position);
     this.mesh.position.x = this.x;
     this.mesh.position.y = this.y;
     this.mesh.position.z = 0;
-    // this.mesh.scale.x = 1;
-    // this.mesh.scale.y = 1;
 
-    // this.mesh.rotation.x = 100;
-    // this.mesh.rotation.y = (Math.PI / 180) * 100;
     return { mesh: this.mesh, geo };
   }
-  // scale() {
-  // const tl = gsap.timeline()
-  // tl.to(this.mesh, {scale: 1}).to({})
-  // }
   render() {
-    // this.scale.now += (1 - this.scale.now) * this.scale.ease;
     const delta = this.clock.getDelta();
     this.time += delta;
-    // console.log(this.time);
 
-    // scale animation
-    //------------------
     if (this.delay < this.time) {
       this.start = true;
     }
@@ -211,54 +171,13 @@ class Plate {
       this.minus = false;
       this.changePosition();
     }
-    //------------------
 
-    // console.log(this.scale.now);
-    // this.position.range += (1 - this.position.range) * this.position.speed;
-
-    // this.position.x +=
-    //   (this.x * this.position.range - this.position.x) * this.position.ease;
-    // this.position.y +=
-    //   (this.y * this.position.range - this.position.y) * this.position.ease;
-    // console.log(this.position.range);
-
-    // if (this.position.range > 0.999) {
-    //   this.changePosition();
-    // }
-
-    // this.position.x += (this.x - this.position.x) * this.scale.now;
-    // this.position.y += (this.y - this.position.y) * this.scale.now;
-    // if (this.x - this.position.x < 0.001) {
-    //   this.changePosition();
-    // }
-
-    // console.log(this.scale.now);
     this.mesh.scale.x = this.scale.now;
     this.mesh.scale.y = this.scale.now;
-    // this.mesh.rotation.y = (Math.PI / 180) * 90 * this.scale.now;
-    // this.mesh.rotation.x += 0.1;
-    // this.mesh.rotation.y += 0.1;
-    // this.mesh.rotation.z += 0.1;
-    // this.mesh.position.x = this.position.x;
-    // this.mesh.position.y = this.position.y;
-    // (this.uniforms.u_uvPosition.value.x =
-    //   this.position.x / this.windowSize.w + 0.5),
-    //   (this.uniforms.u_uvPosition.value.y =
-    //     this.position.y / this.windowSize.h + 0.5);
-    // if (this.index === 0) {
-    //   console.log(this.position.x, this.position.y);
-    // }
   }
 
   changePosition() {
     const { x, y } = this.positionRandom();
-    // if (this.index === 0) {
-    //   console.log(x, y);
-    // }
-
-    // this.position.x = this.x;
-    // this.position.y = this.y;
-    // this.position.range = 0;
     this.x = x;
     this.y = y;
     this.mesh.position.x = this.x;
