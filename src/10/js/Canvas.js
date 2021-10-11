@@ -18,8 +18,8 @@ export default class Canvas extends TemplateCanvas {
     };
     const heightRatio = 1604 / 2143;
 
-    this.xRange = 0.8;
-    this.yRange = 0.7;
+    this.xRange = 0.7;
+    this.yRange = 0.6;
 
     this.delay = {
       max: 30.0,

@@ -4,5 +4,11 @@ body {
   margin: 0;
 }
 .page10 {
-  background-color: #abc;
+  background: linear-gradient(
+    135deg,
+    #0e000f 0%,
+    #242424 45%,
+    #242424 55%,
+    #020018 100%
+  );
 }
