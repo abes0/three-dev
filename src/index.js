@@ -9,6 +9,7 @@ import Page07 from "./07";
 import Page08 from "./08";
 import Page09 from "./09";
 import Page10 from "./10";
+import Page11 from "./11";
 
 document.addEventListener("DOMContentLoaded", () => {
   const path = location.pathname.split("/")[1];
@@ -38,6 +39,8 @@ document.addEventListener("DOMContentLoaded", () => {
       return new Page09();
     case "10":
       return new Page10();
+    case "11":
+      return new Page11();
     default:
       break;
   }
