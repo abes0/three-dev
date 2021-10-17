@@ -102,6 +102,8 @@ const app = {
   devServer: {
     contentBase: pubPath,
     open: true,
+    host: "0.0.0.0",
+    useLocalIp: true,
   },
   plugins: [...pugArray],
 };
