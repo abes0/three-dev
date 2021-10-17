@@ -3,7 +3,6 @@ import "core-js/stable";
 import "regenerator-runtime/runtime";
 import TemplateCanvas from "../../TemplateCanvas";
 import fragmentShader from "./fragmentShader.frag";
-import fragmentShader2 from "./fragmentShader2.frag";
 import vertexShader from "./vertexShader.vert";
 import * as THREE from "./three";
 
@@ -32,26 +31,28 @@ export default class Canvas {
     this.renderer.autoClear = true;
 
     this.mainScene = new THREE.Scene();
+
     this.mainCamera = new THREE.PerspectiveCamera(80, 1, 0.1, 50000);
 
     this.capScene = new THREE.Scene();
+
     this.capTg = new THREE.WebGLRenderTarget(16, 16);
 
-    this.capScene2 = new THREE.Scene();
-    this.capTg2 = new THREE.WebGLRenderTarget(16, 16);
-
     //capture用のbox
-    this.capMesh = new THREE.Mesh(
+    this.mesh = new THREE.Mesh(
       new THREE.BoxBufferGeometry(1, 1, 1),
       new THREE.MeshBasicMaterial({
         color: 0x967a2c,
       })
     );
-    this.capScene.add(this.capMesh);
+    this.capScene.add(this.mesh);
 
-    //キャプチャ2のメッシュ
-    this.capMesh2 = new THREE.Mesh(
+    //メインシーンの板ポリ
+    this.dest = new THREE.Mesh(
       new THREE.PlaneBufferGeometry(1, 1),
+      // new THREE.MeshBasicMaterial({
+      //   color: 0xff0000,
+      // })
       new THREE.ShaderMaterial({
         vertexShader,
         fragmentShader,
@@ -66,24 +67,7 @@ export default class Canvas {
         },
       })
     );
-    this.capScene2.add(this.capMesh2);
-
-    this.mainMesh = new THREE.Mesh(
-      new THREE.PlaneBufferGeometry(1, 1),
-      new THREE.ShaderMaterial({
-        vertexShader,
-        fragmentShader: fragmentShader2,
-        transparent: true,
-        depthTest: true,
-        side: THREE.DoubleSide,
-        uniforms: {
-          tDiffuse: { value: this.capTg2.texture },
-          resolution: { value: new THREE.Vector2() },
-          time: { value: 0 },
-        },
-      })
-    );
-    this.mainScene.add(this.mainMesh);
+    this.mainScene.add(this.dest);
 
     this.update();
   }
@@ -103,18 +87,12 @@ export default class Canvas {
     this.renderer.setPixelRatio(window.devicePixelRatio || 1);
     this.renderer.setSize(sw, sh);
 
-    const s = 0.3;
-    this.capMesh.scale.set(sw * s, sw * s, sw * s);
-    this.capMesh.rotation.x += 0.005;
-    this.capMesh.rotation.y -= 0.006;
-    this.capMesh.rotation.z += 0.011;
-    this.capMesh.visible = false;
+    this.mesh.scale.set(sw * 0.2, sw * 0.2, sw * 0.2);
+    this.mesh.rotation.x += 0.005;
+    this.mesh.rotation.y -= 0.006;
+    this.mesh.rotation.z += 0.011;
 
     this.capTg.setSize(
-      sw * window.devicePixelRatio,
-      sh * window.devicePixelRatio
-    );
-    this.capTg2.setSize(
       sw * window.devicePixelRatio,
       sh * window.devicePixelRatio
     );
@@ -122,13 +100,8 @@ export default class Canvas {
     this.renderer.setRenderTarget(this.capTg, true);
     this.renderer.render(this.capScene, this.mainCamera, this.capTg);
 
-    this.renderer.setRenderTarget(this.capTg2, true);
-    this.renderer.render(this.capScene2, this.mainCamera, this.capTg2);
-
-    this.capMesh2.material.uniforms.time.value += 0.2;
-    this.mainMesh.material.uniforms.time.value += 0.2;
-    this.mainMesh.scale.set(sw, sh, 1);
-
+    this.dest.material.uniforms.time.value += 1;
+    this.dest.scale.set(sw, sh, 1);
     this.renderer.render(this.mainScene, this.mainCamera);
   }
 }
