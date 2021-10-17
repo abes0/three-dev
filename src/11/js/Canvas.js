@@ -1,188 +1,134 @@
-import * as THREE from "three";
+// import * as THREE from "three";
 import "core-js/stable";
 import "regenerator-runtime/runtime";
 import TemplateCanvas from "../../TemplateCanvas";
 import fragmentShader from "./fragmentShader.frag";
+import fragmentShader2 from "./fragmentShader2.frag";
 import vertexShader from "./vertexShader.vert";
+import * as THREE from "./three";
 
-export default class Canvas extends TemplateCanvas {
+export default class Canvas {
+  constructor() {
+    this.renderer = undefined;
+    this.mainScene = undefined;
+    this.mainCamera = undefined;
+    this.capScene = undefined;
+    this.capTag = undefined;
+    this.mesh = undefined;
+    this.dest = undefined;
+    this.init();
+  }
   init() {
-    this.createPlanes();
-  }
+    const sw = innerWidth;
+    const sh = innerHeight;
 
-  createPlanes() {
-    const amount = 60;
-    const width = {
-      max: 300,
-      min: 200,
-    };
-    const heightRatio = 1604 / 2143;
-
-    this.xRange = 0.8;
-    this.yRange = 0.7;
-
-    this.delay = {
-      max: 30.0,
-      min: 0.0,
-    };
-
-    this.meshArray = [];
-    this.geoArray = [];
-    for (let i = 0; i < amount; i++) {
-      const w = width.max;
-      const h = w * heightRatio;
-      const x = this.range(this.xRange * (this.w / 2));
-      const y = this.range(this.yRange * (this.h / 2));
-      const delay = this.random(this.delay.max, this.delay.min) + 0.05;
-      const plate = new Plate({
-        w,
-        h,
-        x,
-        y,
-        delay,
-        positionRandom: this.positionRandom.bind(this),
-        windowSize: {
-          w: this.w,
-          h: this.h,
-        },
-        index: i,
-      });
-      const { mesh, geo } = plate.create();
-      this.meshArray.push(plate);
-      this.geoArray.push(geo);
-      this.group.add(mesh);
-    }
-  }
-
-  render() {
-    if (this.meshArray) {
-      this.meshArray.forEach((item) => {
-        item.render();
-      });
-    }
-  }
-
-  positionRandom() {
-    const x = this.range(this.xRange * (this.w / 2));
-    const y = this.range(this.yRange * (this.h / 2));
-
-    return { x, y };
-  }
-}
-
-class Plate {
-  constructor(option = {}) {
-    this.w = option.w;
-    this.h = option.h;
-    this.x = option.x;
-    this.y = option.y;
-    this.delay = option.delay;
-    this.positionRandom = option.positionRandom;
-    this.windowSize = option.windowSize;
-    this.index = option.index;
-    this.scale = {
-      target: 1,
-      now: 0,
-      ease: 0.05,
-    };
-    this.position = {
-      x: this.x,
-      y: this.y,
-      ease: 0.05,
-      range: 0,
-      speed: 0.02,
-    };
-    this.complete = false;
-    this.minus = false;
-    this.start = false;
-
-    this.clock = new THREE.Clock();
-    this.time = 0;
-    this.texture = new THREE.TextureLoader().load(
-      "./picture-min.jpg",
-      (tex) => {
-        return tex;
-      }
-    );
-  }
-  create() {
-    this.uniforms = {
-      u_texture: {
-        type: "t",
-        value: this.texture,
-      },
-      u_resolution: {
-        type: "v2",
-        value: new THREE.Vector2(this.windowSize.w, this.windowSize.h),
-      },
-      u_imageResolution: {
-        type: "v2",
-        value: new THREE.Vector2(2143, 1604),
-      },
-      u_uvPosition: {
-        type: "v2",
-        value: new THREE.Vector2(
-          this.x / this.windowSize.w + 0.5,
-          this.y / this.windowSize.h + 0.5
-        ),
-      },
-      u_uvSize: {
-        type: "v2",
-        value: new THREE.Vector2(
-          this.windowSize.w / this.w,
-          this.windowSize.h / this.h
-        ),
-      },
-    };
-    const geo = new THREE.PlaneGeometry(this.w, this.h, 32, 32);
-    const mat = new THREE.ShaderMaterial({
-      uniforms: this.uniforms,
-      vertexShader,
-      fragmentShader,
+    this.renderer = new THREE.WebGLRenderer({
+      canvas: document.querySelector("#canvas-container"),
+      alpha: true,
+      antialias: false,
+      stencil: false,
+      powerPreference: "low-power",
     });
-    this.mesh = new THREE.Mesh(geo, mat);
-    this.mesh.position.x = this.x;
-    this.mesh.position.y = this.y;
-    this.mesh.position.z = 0;
+    this.renderer.autoClear = true;
 
-    return { mesh: this.mesh, geo };
+    this.mainScene = new THREE.Scene();
+    this.mainCamera = new THREE.PerspectiveCamera(80, 1, 0.1, 50000);
+
+    this.capScene = new THREE.Scene();
+    this.capTg = new THREE.WebGLRenderTarget(16, 16);
+
+    this.capScene2 = new THREE.Scene();
+    this.capTg2 = new THREE.WebGLRenderTarget(16, 16);
+
+    //capture用のbox
+    this.capMesh = new THREE.Mesh(
+      new THREE.BoxBufferGeometry(1, 1, 1),
+      new THREE.MeshBasicMaterial({
+        color: 0x967a2c,
+      })
+    );
+    this.capScene.add(this.capMesh);
+
+    //キャプチャ2のメッシュ
+    this.capMesh2 = new THREE.Mesh(
+      new THREE.PlaneBufferGeometry(1, 1),
+      new THREE.ShaderMaterial({
+        vertexShader,
+        fragmentShader,
+        transparent: true,
+        depthTest: true,
+        side: THREE.DoubleSide,
+        uniforms: {
+          tDiffuse: {
+            value: this.capTg.texture,
+          },
+          time: { value: 0 },
+        },
+      })
+    );
+    this.capScene2.add(this.capMesh2);
+
+    this.mainMesh = new THREE.Mesh(
+      new THREE.PlaneBufferGeometry(1, 1),
+      new THREE.ShaderMaterial({
+        vertexShader,
+        fragmentShader: fragmentShader2,
+        transparent: true,
+        depthTest: true,
+        side: THREE.DoubleSide,
+        uniforms: {
+          tDiffuse: { value: this.capTg2.texture },
+          resolution: { value: new THREE.Vector2() },
+          time: { value: 0 },
+        },
+      })
+    );
+    this.mainScene.add(this.mainMesh);
+
+    this.update();
   }
-  render() {
-    const delta = this.clock.getDelta();
-    this.time += delta;
 
-    if (this.delay < this.time) {
-      this.start = true;
-    }
-    if (this.start) {
-      if (this.minus) {
-        this.scale.now += (0 - this.scale.now) * this.scale.ease;
-      } else {
-        this.scale.now += (1 - this.scale.now) * this.scale.ease;
-      }
-    }
+  update() {
+    requestAnimationFrame(this.update.bind(this));
 
-    if (this.scale.now > 0.999) {
-      this.minus = true;
-    }
+    const sw = innerWidth;
+    const sh = innerHeight;
 
-    if (this.scale.now < 0.001) {
-      this.start = false;
-      this.minus = false;
-      this.changePosition();
-    }
+    this.mainCamera.aspect = sw / sh;
+    this.mainCamera.updateProjectionMatrix();
+    this.mainCamera.position.z =
+      sh / Math.tan((this.mainCamera.fov * Math.PI) / 360) / 2;
 
-    this.mesh.scale.x = this.scale.now;
-    this.mesh.scale.y = this.scale.now;
-  }
+    this.renderer.setClearColor(0xf2cdd1, 1);
+    this.renderer.setPixelRatio(window.devicePixelRatio || 1);
+    this.renderer.setSize(sw, sh);
 
-  changePosition() {
-    const { x, y } = this.positionRandom();
-    this.x = x;
-    this.y = y;
-    this.mesh.position.x = this.x;
-    this.mesh.position.y = this.y;
-    (this.uniforms.u_uvPosition.value.x = x / this.windowSize.w + 0.5),
-      (this.uniforms.u_uvPosition.value.y = y / this.windowSize.h + 0.5);
+    const s = 0.3;
+    this.capMesh.scale.set(sw * s, sw * s, sw * s);
+    this.capMesh.rotation.x += 0.005;
+    this.capMesh.rotation.y -= 0.006;
+    this.capMesh.rotation.z += 0.011;
+    this.capMesh.visible = false;
+
+    this.capTg.setSize(
+      sw * window.devicePixelRatio,
+      sh * window.devicePixelRatio
+    );
+    this.capTg2.setSize(
+      sw * window.devicePixelRatio,
+      sh * window.devicePixelRatio
+    );
+
+    this.renderer.setRenderTarget(this.capTg, true);
+    this.renderer.render(this.capScene, this.mainCamera, this.capTg);
+
+    this.renderer.setRenderTarget(this.capTg2, true);
+    this.renderer.render(this.capScene2, this.mainCamera, this.capTg2);
+
+    this.capMesh2.material.uniforms.time.value += 0.2;
+    this.mainMesh.material.uniforms.time.value += 0.2;
+    this.mainMesh.scale.set(sw, sh, 1);
+
+    this.renderer.render(this.mainScene, this.mainCamera);
   }
 }
