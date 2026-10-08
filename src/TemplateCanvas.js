@@ -7,7 +7,12 @@ import noise from "simplenoise";
 export default class TemplateCanvas {
   constructor() {
     //マウス座標
-    this.mouse = new THREE.Vector2(0, 0);
+    this.mouse = new THREE.Vector2(0.5, 0.5);
+    this.mouseNow = new THREE.Vector2(0.5, 0.5);
+    if (!this.mouseEase) this.mouseEase = 1;
+
+    //時間
+    this.time = 0;
 
     //スクロール量
     this.scrollY = 0;
@@ -16,6 +21,25 @@ export default class TemplateCanvas {
     this.w = window.innerWidth;
     this.h = window.innerHeight;
 
+    // Ratina判定
+    this.scale = window.devicePixelRatio;
+
+    // 解像度
+    this.resolution = new THREE.Vector2(this.w * this.scale, this.h * this.scale)
+    console.log("res", this.resolution);
+
+    this.uniforms = {
+      time: {
+        value: this.time,
+      },
+      resolution: {
+        value: this.resolution,
+      },
+      mouse: {
+        value: this.mouseNow,
+      },
+    };
+
     // レンダラーを作成
     this.renderer = new THREE.WebGLRenderer({
       alpha: true,
@@ -23,7 +47,7 @@ export default class TemplateCanvas {
       localClippingEnabled: true,
     });
     this.renderer.setSize(this.w, this.h);
-    this.renderer.setPixelRatio(window.devicePixelRatio);
+    this.renderer.setPixelRatio(this.scale);
 
     const container = document.getElementById("canvas-container");
     container.appendChild(this.renderer.domElement);
@@ -57,7 +81,10 @@ export default class TemplateCanvas {
   }
 
   mouseMoved(e) {
-    console.log("mouseMoved");
+    // console.log("mouseMoved");
+    this.mouse.x = e.x / this.w;
+    this.mouse.y = 1 - (e.y / this.h);
+    // console.log(this.mouse);
   }
 
   onMouseDown(e) {
@@ -67,14 +94,30 @@ export default class TemplateCanvas {
   onMouseUp(e) {
     console.log("onMouseUp");
   }
+  onResize() {
+    this.w = window.innerWidth;
+    this.h = window.innerHeight;
+    this.resolution.x = this.w * this.scale;
+    this.resolution.y = this.h * this.scale;
+    this.camera.aspect = this.w / this.h;
+    this.camera.updateProjectionMatrix;
+    this.renderer.setSize(this.w, this.h);
+    // console.log(this.uniforms.resolution);
+    console.log("res", this.resolution);
+    
+  }
 
   rootRender() {
     requestAnimationFrame(() => {
       this.rootRender();
     });
     if (this.render) {
+      this.uniforms.time.value = performance.now() / 1000;
+      this.mouseNow.x += (this.mouse.x - this.mouseNow.x) * this.mouseEase;
+      this.mouseNow.y += (this.mouse.y - this.mouseNow.y) * this.mouseEase;
       this.render();
     }
+    // this.renderer.setPixelRatio(window.devicePixelRatio || 1)
 
     this.renderer.render(this.scene, this.camera);
   }

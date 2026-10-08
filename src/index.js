@@ -10,6 +10,11 @@ import Page08 from "./08";
 import Page09 from "./09";
 import Page10 from "./10";
 import Page11 from "./11";
+import Page12 from "./12";
+import Page13 from "./13";
+import Page14 from "./14";
+import Page15 from "./15";
+import Page16 from "./16";
 
 document.addEventListener("DOMContentLoaded", () => {
   const path = location.pathname.split("/")[1];
@@ -41,6 +46,16 @@ document.addEventListener("DOMContentLoaded", () => {
       return new Page10();
     case "11":
       return new Page11();
+    case "12":
+      return new Page12();
+    case "13":
+      return new Page13();
+    case "14":
+      return new Page14();
+    case "15":
+      return new Page15();
+    case "16":
+      return new Page16();
     default:
       break;
   }

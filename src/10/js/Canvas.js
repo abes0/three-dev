@@ -13,7 +13,7 @@ export default class Canvas extends TemplateCanvas {
   createPlanes() {
     const amount = 60;
     const width = {
-      max: 300,
+      max: 200,
       min: 200,
     };
     const heightRatio = 1604 / 2143;
